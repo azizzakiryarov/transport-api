@@ -1,5 +1,6 @@
 package se.knowit.iz.service;
 
+import org.assertj.core.api.Assertions;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -11,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import se.knowit.iz.constant.Urls;
 import se.knowit.iz.dto.PrivateVehicleDTO;
+import se.knowit.iz.exception.NotFoundVehicleException;
 import se.knowit.iz.utils.Crawler;
 
 import java.io.IOException;
@@ -58,7 +60,7 @@ public class TransportServiceTest {
     }
 
     @Test
-    public void getPrivateVehicleByRegistrationNumberSuccessfully() throws IOException {
+    public void getPrivateVehicleByRegistrationNumberSuccessfully() throws IOException, NotFoundVehicleException {
         ResponseEntity<PrivateVehicleDTO> expectedPrivateVehicleDTOResponseEntity = new ResponseEntity<>(mockPrivateVehicleDTO, HttpStatus.OK);
         Mockito.when(mockCrawler.findVehiclesDetails(VALID_URL + mockPrivateVehicleDTO.getRegistrationNumber())).thenReturn(mockPrivateVehicleDTO);
         ResponseEntity<PrivateVehicleDTO> actualPrivateVehicleDTOResponseEntity = transportService.getPrivateVehicleByRegistrationNumber(VALID_REGISTRATION_NUMBER);
@@ -66,22 +68,32 @@ public class TransportServiceTest {
     }
 
     @Test
-    public void getPrivateVehicleByRegistrationNumberThrowIOException() throws IOException {
+    public void getPrivateVehicleByRegistrationNumberThrowIOException() throws IOException, NotFoundVehicleException {
         ResponseEntity<PrivateVehicleDTO> expectedPrivateVehicleDTOResponseEntity = new ResponseEntity<>(HttpStatus.BAD_GATEWAY);
         Mockito.when(mockCrawler.findVehiclesDetails(any())).thenThrow(new IOException());
         ResponseEntity<PrivateVehicleDTO> actualPrivateVehicleDTOResponseEntity = transportService.getPrivateVehicleByRegistrationNumber(VALID_REGISTRATION_NUMBER);
         Assert.assertEquals(expectedPrivateVehicleDTOResponseEntity, actualPrivateVehicleDTOResponseEntity);
     }
 
-    @Test(expected = IOException.class)
-    public void getPrivateVehicleByRegistrationNumberWrongURL() throws IOException {
-        crawler.findVehiclesDetails(INVALID_URL + VALID_REGISTRATION_NUMBER);
+    @Test
+    public void getPrivateVehicleByRegistrationNumberThrowNotFoundVehicleException() throws IOException, NotFoundVehicleException {
+        ResponseEntity<PrivateVehicleDTO> expectedPrivateVehicleDTOResponseEntity = new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        Mockito.when(mockCrawler.findVehiclesDetails(any())).thenThrow(new NotFoundVehicleException());
+        ResponseEntity<PrivateVehicleDTO> actualPrivateVehicleDTOResponseEntity = transportService.getPrivateVehicleByRegistrationNumber(INVALID_REGISTRATION_NUMBER);
+        Assert.assertEquals(expectedPrivateVehicleDTOResponseEntity, actualPrivateVehicleDTOResponseEntity);
     }
 
-    @Test()
-    public void getPrivateVehicleByRegistrationNumberWrongRegistrationNumberReturnEmptyObject() throws IOException {
-        PrivateVehicleDTO expectedPrivateVehicleDTO = new PrivateVehicleDTO(null, null, null, null, 0);
-        PrivateVehicleDTO actualPrivateVehicleDTO = crawler.findVehiclesDetails(VALID_URL + INVALID_REGISTRATION_NUMBER);
-        Assert.assertEquals(expectedPrivateVehicleDTO, actualPrivateVehicleDTO);
+    @Test
+    public void getPrivateVehicleByRegistrationNumberWrongURL() {
+        Assertions.assertThatThrownBy(() -> crawler.findVehiclesDetails(INVALID_URL + VALID_REGISTRATION_NUMBER))
+                .isInstanceOf(IOException.class)
+                .hasMessageContaining("Something is wrong: " + INVALID_URL + VALID_REGISTRATION_NUMBER);
+    }
+
+    @Test
+    public void getPrivateVehicleByRegistrationNumberWrongRegistrationNumberThrowNotFoundVehicleException() {
+        Assertions.assertThatThrownBy(() -> crawler.findVehiclesDetails(VALID_URL + INVALID_REGISTRATION_NUMBER))
+                .isInstanceOf(NotFoundVehicleException.class)
+                .hasMessageContaining("You are typing wrong registration number!");
     }
 }

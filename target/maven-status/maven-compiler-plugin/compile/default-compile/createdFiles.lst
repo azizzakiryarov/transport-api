@@ -1,5 +1,7 @@
-se/knowit/iz/utils/Crawler.class
 se/knowit/iz/TransportApi.class
+se/knowit/iz/exception/NotFoundVehicleException.class
+se/knowit/iz/dto/PrivateVehicleDTO.class
+se/knowit/iz/constant/Urls.class
+se/knowit/iz/utils/Crawler.class
 se/knowit/iz/service/TransportService.class
 se/knowit/iz/controller/TransportController.class
-se/knowit/iz/dto/PrivateVehicleDTO.class

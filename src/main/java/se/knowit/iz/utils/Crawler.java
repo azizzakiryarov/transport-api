@@ -9,6 +9,8 @@ import org.jsoup.safety.Safelist;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
 import se.knowit.iz.dto.PrivateVehicleDTO;
+import se.knowit.iz.exception.NotFoundVehicleException;
+
 import java.io.IOException;
 
 @Slf4j
@@ -21,7 +23,7 @@ public class Crawler {
 
     PrivateVehicleDTO privateVehicleDTO;
 
-    public PrivateVehicleDTO findVehiclesDetails(String url) throws IOException {
+    public PrivateVehicleDTO findVehiclesDetails(String url) throws IOException, NotFoundVehicleException {
         if (Jsoup.isValid(url, Safelist.basic())) {
             Document doc;
             privateVehicleDTO = new PrivateVehicleDTO();
@@ -67,6 +69,9 @@ public class Crawler {
             } else {
                 log.info("There is no elements at all!");
             }
+        }
+        if (privateVehicleDTO.getRegistrationNumber() == null) {
+            throw new NotFoundVehicleException("You are typing wrong registration number!");
         }
         return privateVehicleDTO;
     }
